@@ -3,3 +3,4 @@ pandas
 scikit-learn
 matplotlib
 seaborn
+plotly==5.24.1
