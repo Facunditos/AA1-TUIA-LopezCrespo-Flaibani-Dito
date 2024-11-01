@@ -42,6 +42,7 @@ scipy>=1.7.0
 optuna
 pyqt5 
 pyqtwebengine
+shap
 
 
 
