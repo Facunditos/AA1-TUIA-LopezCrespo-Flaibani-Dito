@@ -17,7 +17,6 @@ imbalanced-learn
 jinja2
 nbformat --upgrade
 shap==0.46.0
-pycaret
 
 
 # Deep Learning Frameworks
