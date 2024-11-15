@@ -1,3 +1,6 @@
 notas.txt
 logs.log
 best_model_AUTOML.pkl
+best_grid_model.joblib
+best_grid_params.json
+best_grid_score.json
