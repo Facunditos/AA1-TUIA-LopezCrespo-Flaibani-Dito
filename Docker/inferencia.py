@@ -18,6 +18,6 @@ output = pipeline_model.predict(imput)
 
 logger.info('make Predictions')
 
-pd.DataFrame(output, columns=['Llueve_predicha']).to_csv('/files/ourput.csv', index = False)
+pd.DataFrame(output, columns=['Raintomorrow']).to_csv('/files/output.csv', index = False)
 
 logger.info('saved output')

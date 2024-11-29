@@ -5,13 +5,12 @@ FROM python:3.11-slim
 WORKDIR /app
 
 # Copiar los archivos necesarios al contenedor
-COPY requirements.txt pipeline_model.pkl /app/  
+COPY requirements.txt modifiers.py pipeline_model.pkl /app/  
 
 # Instalar las dependencias
 RUN pip install --no-cache-dir -r requirements.txt
 
-#inferencia.py rnn.h5 rqst.py 
-COPY.. 
+COPY inferencia.py /app/inferencia.py
 
 # Definir el comando predeterminado
 CMD ["python", "inferencia.py"]
