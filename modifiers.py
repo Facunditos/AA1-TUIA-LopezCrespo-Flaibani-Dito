@@ -1,16 +1,24 @@
-
-#if __name__ == "__main__":
-#    main()
-
 import pandas as pd
 import numpy as np
 from sklearn.preprocessing import StandardScaler, OneHotEncoder
+# from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import (accuracy_score, precision_score, recall_score,f1_score, balanced_accuracy_score, classification_report, confusion_matrix)
+from sklearn.metrics import make_scorer
+import joblib
+import json
 import warnings
-#import tensorflow as tf
+import tensorflow as tf
+from tensorflow.keras.models import load_model
 warnings.filterwarnings("ignore")
 
-df = pd.read_csv(r"weatherAUS.csv")
-df_weather = df.dropna(subset=['RainTomorrow'])
+
+df = pd.read_csv(r"input.csv")
+# cities = ['Dartmoor', 'Nuriootpa', 'PerthAirport', 'Uluru', 'Cobar', 'CoffsHarbour', 
+#               'Walpole', 'Cairns', 'AliceSprings', 'GoldCoast']
+# df_weather = df[df['Location'].isin(cities)].copy()
+# df_weather = df_weather.drop('RainTomorrow', axis=1)
+# sampled_df = df_weather.sample(n=200)
+# sampled_df.to_csv('input.csv', index=False)
 
 def filter_and_add_coordinates(df_weather):
     """
@@ -50,26 +58,6 @@ def drop_target(df, target_column='RainTomorrow'):
     Elimina filas con valores nulos en la columna objetivo.
     """
     return df.drop(target_column, axis=1)
-
-# def transform_date_column(df, date_column='Date', month_column='Month'):
-#     """
-#     Transforma una columna de fecha para extraer el mes como categórico.
-#     Retorna: pd.DataFrame: DataFrame con la columna de fechas convertida y una nueva columna con el mes categórico.
-#     """
-#     # Diccionario para convertir números de mes a nombres
-#     month_dict = {
-#         1: 'ene', 2: 'feb', 3: 'mar', 4: 'abr',
-#         5: 'may', 6: 'jun', 7: 'jul', 8: 'ago',
-#         9: 'sep', 10: 'oct', 11: 'nov', 12: 'dic'
-#     }    
-#     # Crear una copia del DataFrame para evitar modificar el original
-#     df_weather= drop_missing_target(df).copy()    
-#     # Convertir la columna de fechas a datetime
-#     df_weather[date_column] = pd.to_datetime(df_weather[date_column], format='mixed')
-#     #df_weather['Date']=pd.to_datetime(df_weather['Date'],format='mixed')    
-#     # Extraer el mes y mapearlo a nombres de mes
-#     df_weather[month_column] = df_weather[date_column].dt.month.map(month_dict)   
-#     return df_weather
 
 def add_month(df):
     # En relación al tiempo se utilizan las features Date(cuantitativa) y Month(cualitativa)
@@ -196,15 +184,25 @@ def impute_with_mean(df, columns_to_impute_simetricas):
     df_imputed = df.fillna(means)    
     return df_imputed
 
-def codificar_features_cuali(data_set,col_catego):
-    """Recibe un data frame y sus columnas categoricas y 
-    devuelve el data frame transformado con la correspondiente 
-    codificación de estas columnas"""
-    encoder = OneHotEncoder(sparse_output=False,drop='first')
+def encode_categorical_features(data_set, col_catego):
+    """
+    Realiza la codificación one-hot de columnas categóricas en un DataFrame.
+    Parámetros:
+    - data_set (pd.DataFrame): DataFrame original con las columnas categóricas.
+    - col_catego (list): Lista de nombres de columnas categóricas a codificar.
+    Retorna:
+    - pd.DataFrame: DataFrame con las columnas categóricas codificadas.
+    """
+    # Inicializar el codificador OneHotEncoder
+    encoder = OneHotEncoder(sparse_output=False, drop='first')
+    # Ajustar y transformar las columnas categóricas
     one_hot_encoded = encoder.fit_transform(data_set[col_catego])
-    one_hot_df = pd.DataFrame(one_hot_encoded, columns=encoder.get_feature_names_out(col_catego))
-    df_encoded = pd.concat([data_set, one_hot_df], axis=1)
-    df_encoded = df_encoded.drop(col_catego, axis=1)
+    # Crear un DataFrame con las columnas codificadas
+    one_hot_df = pd.DataFrame(one_hot_encoded, 
+                              columns=encoder.get_feature_names_out(col_catego), 
+                              index=data_set.index)
+    # Eliminar las columnas categóricas originales y unir las codificadas
+    df_encoded = pd.concat([data_set.drop(columns=col_catego), one_hot_df], axis=1)
     return df_encoded
 
 def scale_numeric_features(df, numeric_columns):
@@ -236,6 +234,12 @@ def drop_date_column(df):
     else:
         raise ValueError("La columna 'Date' no existe en el DataFrame.")
     return df_cleaned
+
+def pondered_accuracy(y_true, y_pred):
+    recall_scorer_0 = recall_score(y_true, y_pred, pos_label=0)
+    recall_scorer_1 = recall_score(y_true, y_pred, pos_label=1)
+    return (2 * recall_scorer_1 + recall_scorer_0) / 3
+
 
 paso0 = filter_and_add_coordinates(df_weather)
 paso1 = drop_target(paso0, target_column='RainTomorrow')
@@ -273,7 +277,8 @@ paso7 = impute_with_median(paso6, columns_to_impute)
 columns_to_impute_simetricas = ['MinTemp', 'MaxTemp', 'Temp9am', 'Temp3pm']
 paso8 = impute_with_mean(paso7, columns_to_impute_simetricas)
 features_cuali = ['WindGustDir', 'WindDir9am', 'WindDir3pm', 'RainToday', 'Month']
-paso9 = codificar_features_cuali(paso8, features_cuali)
+# paso9 = codificar_features_cuali(paso8, features_cuali)
+paso9 = encode_categorical_features(paso8, features_cuali)
 
 # Escalado
 features_cuanti = ['MinTemp','MaxTemp','Rainfall','Evaporation','Sunshine','WindGustSpeed','WindSpeed9am','WindSpeed3pm',
@@ -282,3 +287,49 @@ paso10 = scale_numeric_features(paso9, features_cuanti)
 
 # Elimina columna date
 paso11 = drop_date_column(paso10)
+
+
+best_grid_model = joblib.load('best_grid_model.joblib')
+with open('best_grid_score.json', 'r') as archivo:
+    best_grid_score = json.load(archivo)
+print("Modelo y parámetros cargados exitosamente.")
+# Calcular las métricas en el conjunto de prueba
+y_pred_grid = best_grid_model.predict(paso11)
+# print(f"Mejores parámetros del grid: {best_grid_params}")
+print(f"Pondered accuracy en train: {best_grid_score}")
+
+def pondered_accuracy_rn(y_true, y_pred):
+    # Convertimos predicciones a clases binarias (umbral 0.5)
+    y_pred_binary = tf.cast(y_pred > 0.5, tf.int32)
+    y_true = tf.cast(y_true, tf.int32)
+    # Calculamos recall por clase
+    recall_0 = tf.reduce_sum(tf.cast(tf.logical_and(y_true == 0, y_pred_binary == 0), tf.float32)) / (tf.reduce_sum(tf.cast(y_true == 0, tf.float32) + tf.keras.backend.epsilon()))
+    recall_1 = tf.reduce_sum(tf.cast(tf.logical_and(y_true == 1, y_pred_binary == 1), tf.float32)) / (tf.reduce_sum(tf.cast(y_true == 1, tf.float32) + tf.keras.backend.epsilon()))
+    # Ponderación
+    return (2 * recall_1 + recall_0) / 3
+
+# Cargar el modelo
+model_dir="modelos"
+modelo = model_dir+"/modelo_rn_leaky.h5"
+joblib.dump(modelo, "modelo.pkl")
+pipeline= joblib.load(modelo.pkl)#, custom_objects={'pondered_accuracy_rn': pondered_accuracy_rn})
+
+input = pd.read_csv('input.csv')
+output = pipeline.predict(input)
+# logger.info('make Predictions')
+
+modelo_cargado = load_model("modelos/modelo_rn_relu.h5", custom_objects={'pondered_accuracy_rn': pondered_accuracy_rn})
+# Evaluar el modelo cargado
+predict = modelo_cargado.predict(paso11)
+pd.DataFrame(predict, columns=['RainTomorrow']).to_csv('output.csv', index = False)
+
+
+
+
+
+
+
+
+
+#if __name__ == "__main__":
+#    main()
