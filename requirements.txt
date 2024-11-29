@@ -1,21 +1,21 @@
-# MLOps Libraries
-#mlflow==1.20.2
-
-
-# Data Science Libraries
-numpy
-pandas
-scikit-learn==1.4.2 # compatible con sktime ==0.26.0
-matplotlib
-seaborn
-plotly
-imbalanced-learn
-jinja2
-shap
-optuna
-pycaret # compatible con python 3.9 3.10 3.11 unicamente
-#nbformat --upgrade
-ipykernel
-
-# Deep Learning Frameworks
-tensorflow
+# # MLOps Libraries
+# #mlflow==1.20.2
+# scikit-learn==1.4.2  # compatible con sktime ==0.26.0
+# tensorflow==2.18.0
+# numpy==1.24.4
+# pandas==2.1.4
+# Versiones de Marcela
+scikit-learn==1.5.2  
+tensorflow==2.18.0
+numpy==2.0.2
+pandas==2.2.3
+# matplotlib
+# seaborn
+# plotly
+# imbalanced-learn
+# jinja2
+# shap
+# optuna
+# pycaret # compatible con python 3.9 3.10 3.11 unicamente
+# #nbformat --upgrade
+# ipykernel
