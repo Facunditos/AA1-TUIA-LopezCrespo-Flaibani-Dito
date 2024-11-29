@@ -13,7 +13,7 @@ import sys
 warnings.filterwarnings("ignore")
 
 
-df = pd.read_csv(r"input.csv")
+# df = pd.read_csv(r"input.csv")
 # cities = ['Dartmoor', 'Nuriootpa', 'PerthAirport', 'Uluru', 'Cobar', 'CoffsHarbour', 
 #               'Walpole', 'Cairns', 'AliceSprings', 'GoldCoast']
 # df_weather = df[df['Location'].isin(cities)].copy()
@@ -241,62 +241,6 @@ def pondered_accuracy(y_true, y_pred):
     recall_scorer_1 = recall_score(y_true, y_pred, pos_label=1)
     return (2 * recall_scorer_1 + recall_scorer_0) / 3
 
-
-# paso0 = filter_and_add_coordinates(df_weather)
-# paso1 = drop_target(paso0, target_column='RainTomorrow')
-# paso2 =  add_month(paso1)
-
-# # Imputaciones
-# variables = ['Sunshine', 'Cloud9am', 'Cloud3pm', 'Evaporation']
-# paso3 = impute_media_segmentada_por_mes(paso2, variables, mes_col='Month')
-# paso4 = impute_wind_directions(paso3)
-# variables = ['WindGustDir', 'WindDir9am', 'WindDir3pm', 'RainToday']
-# paso5 = imputar_moda(paso4, variables)
-# features_cuali = ['WindGustDir', 'WindDir9am', 'WindDir3pm']
-# direction_dict = {
-#     'SSW':'S',
-#     'S':'S',
-#     'SE':'S',
-#     'NNE':'N',
-#     'WNW':'W',
-#     'N':'N',
-#     'ENE':'E',
-#     'NE':'N',
-#     'E':'E',
-#     'SW':'S',
-#     'W':'W',
-#     'WSW':'W',
-#     'NNW':'N',
-#     'ESE':'E',
-#     'SSE':'S',
-#     'NW':'N'
-# }
-# paso6 = map_wind_directions(paso5, features_cuali, direction_dict)
-# columns_to_impute = ['WindGustSpeed', 'Humidity9am', 'Humidity3pm', 'Rainfall',
-#                      'WindSpeed9am', 'WindSpeed3pm', 'Pressure9am', 'Pressure3pm']
-# paso7 = impute_with_median(paso6, columns_to_impute)
-# columns_to_impute_simetricas = ['MinTemp', 'MaxTemp', 'Temp9am', 'Temp3pm']
-# paso8 = impute_with_mean(paso7, columns_to_impute_simetricas)
-# features_cuali = ['WindGustDir', 'WindDir9am', 'WindDir3pm', 'RainToday', 'Month']
-# # paso9 = codificar_features_cuali(paso8, features_cuali)
-# paso9 = encode_categorical_features(paso8, features_cuali)
-# # Escalado
-# features_cuanti = ['MinTemp','MaxTemp','Rainfall','Evaporation','Sunshine','WindGustSpeed','WindSpeed9am','WindSpeed3pm',
-# 'Humidity9am','Humidity3pm','Pressure9am','Pressure3pm','Cloud9am','Cloud3pm','Temp9am','Temp3pm','Latitude','Longitude']
-# paso10 = scale_numeric_features(paso9, features_cuanti)
-# # Elimina columna date
-# paso11 = drop_date_column(paso10)
-
-
-# best_grid_model = joblib.load('best_grid_model.joblib')
-# with open('best_grid_score.json', 'r') as archivo:
-#     best_grid_score = json.load(archivo)
-# print("Modelo y parámetros cargados exitosamente.")
-# # Calcular las métricas en el conjunto de prueba
-# y_pred_grid = best_grid_model.predict(paso11)
-# # print(f"Mejores parámetros del grid: {best_grid_params}")
-# print(f"Pondered accuracy en train: {best_grid_score}")
-
 def pondered_accuracy_rn(y_true, y_pred):
     # Convertimos predicciones a clases binarias (umbral 0.5)
     y_pred_binary = tf.cast(y_pred > 0.5, tf.int32)
@@ -306,16 +250,6 @@ def pondered_accuracy_rn(y_true, y_pred):
     recall_1 = tf.reduce_sum(tf.cast(tf.logical_and(y_true == 1, y_pred_binary == 1), tf.float32)) / (tf.reduce_sum(tf.cast(y_true == 1, tf.float32) + tf.keras.backend.epsilon()))
     # Ponderación
     return (2 * recall_1 + recall_0) / 3
-
-
-# # Cargar el modelo
-# # model_dir="modelos"
-# # modelo = model_dir+"/modelo_rn_leaky.h5"
-# input = pd.read_csv('input.csv')
-# modelo_cargado = load_model("modelos/modelo_rn_relu.h5", custom_objects={'pondered_accuracy_rn': pondered_accuracy_rn})
-# # Evaluar el modelo cargado
-# predict = modelo_cargado.predict(paso11)
-# pd.DataFrame(predict, columns=['RainTomorrow']).to_csv('output.csv', index = False)
 
 
 if __name__ == '__main__':
@@ -330,7 +264,6 @@ if __name__ == '__main__':
         input = pd.read_csv(datos)
 
         paso1 = filter_and_add_coordinates(input)
-        # paso1 = drop_target(paso0, target_column='RainTomorrow')
         paso2 =  add_month(paso1)
         # Imputaciones
         variables = ['Sunshine', 'Cloud9am', 'Cloud3pm', 'Evaporation']
