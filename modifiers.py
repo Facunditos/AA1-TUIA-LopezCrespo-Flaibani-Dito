@@ -295,7 +295,7 @@ if __name__ == '__main__':
         # Elimina columna date
         paso11 = drop_date_column(paso10)
 
-        modelo_cargado = load_model("modelos/modelo_rn_relu.h5", custom_objects={'pondered_accuracy_rn': pondered_accuracy_rn})
+        modelo_cargado = load_model("modelos/modelo_rn_best.h5", custom_objects={'pondered_accuracy_rn': pondered_accuracy_rn})
         # Evaluar el modelo cargado
         predict = modelo_cargado.predict(paso11)
         pd.DataFrame(predict, columns=['RainTomorrow']).to_csv('output.csv', index = False)#Ruta dentro del contenedor
