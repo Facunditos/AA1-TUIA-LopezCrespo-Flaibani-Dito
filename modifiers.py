@@ -1,11 +1,8 @@
 import pandas as pd
 import numpy as np
 from sklearn.preprocessing import StandardScaler, OneHotEncoder
-# from sklearn.linear_model import LogisticRegression
-from sklearn.metrics import (accuracy_score, precision_score, recall_score,f1_score, balanced_accuracy_score, classification_report, confusion_matrix)
-from sklearn.metrics import make_scorer
-import joblib
-import json
+from sklearn.metrics import ( recall_score)
+# from sklearn.metrics import make_scorer
 import warnings
 import tensorflow as tf
 from tensorflow.keras.models import load_model
@@ -13,15 +10,7 @@ import sys
 warnings.filterwarnings("ignore")
 
 
-# df = pd.read_csv(r"input.csv")
-# cities = ['Dartmoor', 'Nuriootpa', 'PerthAirport', 'Uluru', 'Cobar', 'CoffsHarbour', 
-#               'Walpole', 'Cairns', 'AliceSprings', 'GoldCoast']
-# df_weather = df[df['Location'].isin(cities)].copy()
-# df_weather = df_weather.drop('RainTomorrow', axis=1)
-# sampled_df = df_weather.sample(n=200)
-# sampled_df.to_csv('input.csv', index=False)
-
-def filter_and_add_coordinates(df_weather):
+def filter_and_add_coordinates(df):
     """
     Filtra un DataFrame para incluir solo ciudades seleccionadas y añade coordenadas fijas.
     Parámetros:
