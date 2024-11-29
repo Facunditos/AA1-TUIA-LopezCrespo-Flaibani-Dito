@@ -10,8 +10,9 @@ import warnings
 warnings.filterwarnings("ignore")
 
 df = pd.read_csv(r"weatherAUS.csv")
+df_weather = df.dropna(subset=['RainTomorrow'])
 
-def filter_and_add_coordinates(df):
+def filter_and_add_coordinates(df_weather):
     """
     Filtra un DataFrame para incluir solo ciudades seleccionadas y añade coordenadas fijas.
     Parámetros:
@@ -44,35 +45,43 @@ def filter_and_add_coordinates(df):
     df_weather = df_weather.drop(columns=['Location'])    
     return df_weather
 
-#df_weather = df_weather.dropna(subset=['RainTomorrow'])
-
-def drop_missing_target(df, target_column='RainTomorrow'):
+def drop_target(df, target_column='RainTomorrow'):
     """
     Elimina filas con valores nulos en la columna objetivo.
     """
-    df= filter_and_add_coordinates(df)
-    return df.dropna(subset=[target_column])
+    return df.drop(target_column, axis=1)
 
-def transform_date_column(df, date_column='Date', month_column='Month'):
-    """
-    Transforma una columna de fecha para extraer el mes como categórico.
-    Retorna: pd.DataFrame: DataFrame con la columna de fechas convertida y una nueva columna con el mes categórico.
-    """
-    # Diccionario para convertir números de mes a nombres
-    month_dict = {
-        1: 'ene', 2: 'feb', 3: 'mar', 4: 'abr',
-        5: 'may', 6: 'jun', 7: 'jul', 8: 'ago',
-        9: 'sep', 10: 'oct', 11: 'nov', 12: 'dic'
-    }    
-    # Crear una copia del DataFrame para evitar modificar el original
-    df_weather= drop_missing_target(df).copy()    
-    # Convertir la columna de fechas a datetime
-    df_weather[date_column] = pd.to_datetime(df_weather[date_column], format='mixed')
-    #df_weather['Date']=pd.to_datetime(df_weather['Date'],format='mixed')    
-    # Extraer el mes y mapearlo a nombres de mes
-    df_weather[month_column] = df_weather[date_column].dt.month.map(month_dict)   
-    return df_weather
+# def transform_date_column(df, date_column='Date', month_column='Month'):
+#     """
+#     Transforma una columna de fecha para extraer el mes como categórico.
+#     Retorna: pd.DataFrame: DataFrame con la columna de fechas convertida y una nueva columna con el mes categórico.
+#     """
+#     # Diccionario para convertir números de mes a nombres
+#     month_dict = {
+#         1: 'ene', 2: 'feb', 3: 'mar', 4: 'abr',
+#         5: 'may', 6: 'jun', 7: 'jul', 8: 'ago',
+#         9: 'sep', 10: 'oct', 11: 'nov', 12: 'dic'
+#     }    
+#     # Crear una copia del DataFrame para evitar modificar el original
+#     df_weather= drop_missing_target(df).copy()    
+#     # Convertir la columna de fechas a datetime
+#     df_weather[date_column] = pd.to_datetime(df_weather[date_column], format='mixed')
+#     #df_weather['Date']=pd.to_datetime(df_weather['Date'],format='mixed')    
+#     # Extraer el mes y mapearlo a nombres de mes
+#     df_weather[month_column] = df_weather[date_column].dt.month.map(month_dict)   
+#     return df_weather
 
+def add_month(df):
+    # En relación al tiempo se utilizan las features Date(cuantitativa) y Month(cualitativa)
+    df['Date']=pd.to_datetime(df['Date'],format='mixed')
+    # df['Date'] = pd.to_datetime(df['Date'], errors='coerce')
+    df['Month'] = df['Date'].dt.month
+    meses = ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic']
+    month_dict = {}
+    for i,mes in enumerate(meses):
+        month_dict[i+1] = mes
+    df['Month'] = df['Month'].map(month_dict)
+    return df
 
 def impute_media_segmentada_por_mes(df, variables, mes_col='Month'):
     """
@@ -187,7 +196,7 @@ def impute_with_mean(df, columns_to_impute_simetricas):
     df_imputed = df.fillna(means)    
     return df_imputed
 
-def codificar_features_cuanti(data_set,col_catego):
+def codificar_features_cuali(data_set,col_catego):
     """Recibe un data frame y sus columnas categoricas y 
     devuelve el data frame transformado con la correspondiente 
     codificación de estas columnas"""
@@ -198,8 +207,41 @@ def codificar_features_cuanti(data_set,col_catego):
     df_encoded = df_encoded.drop(col_catego, axis=1)
     return df_encoded
 
-paso1 = filter_and_add_coordinates(df)
-paso2 = drop_missing_target(paso1, target_column='RainTomorrow')
+def scale_numeric_features(df, numeric_columns):
+    """
+    Escala las características numéricas en un único DataFrame.
+    Parámetros:
+    - df (pd.DataFrame): DataFrame de entrada.
+    - numeric_columns (list): Lista de columnas numéricas a escalar.
+    Retorna:
+    - pd.DataFrame: DataFrame con las columnas numéricas escaladas.
+    """
+    # Inicializar el escalador
+    scaler = StandardScaler()
+    # Escalar las columnas numéricas
+    df_scaled = df.copy()
+    df_scaled[numeric_columns] = scaler.fit_transform(df[numeric_columns])
+    return df_scaled
+
+def drop_date_column(df):
+    """
+    Elimina la columna 'Date' de un DataFrame.
+    Parámetros:
+    - df (pd.DataFrame): DataFrame de entrada.
+    Retorna:
+    - pd.DataFrame: DataFrame sin la columna 'Date'.
+    """
+    if 'Date' in df.columns:
+        df_cleaned = df.drop(columns=['Date'])
+    else:
+        raise ValueError("La columna 'Date' no existe en el DataFrame.")
+    return df_cleaned
+
+paso0 = filter_and_add_coordinates(df_weather)
+paso1 = drop_target(paso0, target_column='RainTomorrow')
+paso2 =  add_month(paso1)
+
+# Imputaciones
 variables = ['Sunshine', 'Cloud9am', 'Cloud3pm', 'Evaporation']
 paso3 = impute_media_segmentada_por_mes(paso2, variables, mes_col='Month')
 paso4 = impute_wind_directions(paso3)
@@ -231,5 +273,12 @@ paso7 = impute_with_median(paso6, columns_to_impute)
 columns_to_impute_simetricas = ['MinTemp', 'MaxTemp', 'Temp9am', 'Temp3pm']
 paso8 = impute_with_mean(paso7, columns_to_impute_simetricas)
 features_cuali = ['WindGustDir', 'WindDir9am', 'WindDir3pm', 'RainToday', 'Month']
-paso9 = codificar_features_cuanti(paso8, features_cuali)
-paso10 =
+paso9 = codificar_features_cuali(paso8, features_cuali)
+
+# Escalado
+features_cuanti = ['MinTemp','MaxTemp','Rainfall','Evaporation','Sunshine','WindGustSpeed','WindSpeed9am','WindSpeed3pm',
+'Humidity9am','Humidity3pm','Pressure9am','Pressure3pm','Cloud9am','Cloud3pm','Temp9am','Temp3pm','Latitude','Longitude']
+paso10 = scale_numeric_features(paso9, features_cuanti)
+
+# Elimina columna date
+paso11 = drop_date_column(paso10)
