@@ -5,13 +5,13 @@ FROM python:3.11-slim
 WORKDIR /app
 
 # Copiar los archivos necesarios al contenedor
-COPY requirements.txt modelo_rn_best.h5 modifiers.py input.csv /app/
+COPY requirements.txt modelo_rn_best.h5 modifiers.py input.csv files /app/
 
 # Instalar las dependencias
 RUN pip install --no-cache-dir -r requirements.txt
-
+VOLUME ["/app/files"]
 #COPY modifiers.py /app/modifiers.py
 
 # Definir el comando predeterminado
 # ENTRYPOINT ["python", "./modifiers.py"]
-CMD ["python", "./app/modifiers.py", "input.csv"]
+CMD ["python", "./modifiers.py", "input.csv"]

@@ -297,7 +297,7 @@ if __name__ == '__main__':
         modelo_cargado = load_model("./modelo_rn_best.h5", custom_objects={'pondered_accuracy_rn': pondered_accuracy_rn})
         # Evaluar el modelo cargado
         predict = modelo_cargado.predict(paso11)
-        pd.DataFrame(predict, columns=['RainTomorrow']).to_csv('./app/output.csv', index = False)#Ruta dentro del contenedor
+        pd.DataFrame(predict, columns=['RainTomorrow']).to_csv('./files/output.csv', index = False)#Ruta dentro del contenedor
 
     except ValueError:
         print('Archivo con formato incorrecto o no se encontró el archivo')
