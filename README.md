@@ -1,5 +1,5 @@
 ## TUIA Aprendizaje Automático I - Trabajo final
-### En este proyecto se llevaron adelante tareas vinculadas con el entrenamiento de modelos para predecir variables variables cuantitavas y cualitativas. 
+### En este proyecto se llevaron adelante tareas vinculadas con el entrenamiento de modelos para predecir variables variables cuantitativas y cualitativas. 
 ## Comenzar:
 - Correr *git clone https://github.com/Facunditos/AA1-TUIA-LopezCrespo-Flaibani-Dito.git* para clonar el repositorio de GitHub en la máquina local.
 
