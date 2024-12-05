@@ -239,18 +239,7 @@ def pondered_accuracy_rn(y_true, y_pred):
     # Ponderación
     return (2 * recall_1 + recall_0) / 3
 
-
-if __name__ == '__main__':
-    # Leer datos de entrada desde la línea de comandos
-    if len(sys.argv) < 2:
-        print("Error: Debes proporcionar un archivo .csv como argumento.")
-        sys.exit(1)
-
-    datos = sys.argv[1]
-    print(f"Procesando el archivo: {datos}")
-    try:
-        input = pd.read_csv(datos)
-
+def pipeline(input):
         paso1 = filter_and_add_coordinates(input)
         paso2 =  add_month(paso1)
         # Imputaciones
@@ -293,11 +282,31 @@ if __name__ == '__main__':
         paso10 = scale_numeric_features(paso9, features_cuanti)
         # Elimina columna date
         paso11 = drop_date_column(paso10)
+        return paso11
 
+
+
+if __name__ == '__main__':
+    # Leer datos de entrada desde la línea de comandos
+    if len(sys.argv) < 2:
+        print("Error: Debes proporcionar un archivo .csv como argumento.")
+        sys.exit(1)
+
+    datos = sys.argv[1]
+    print(f"Procesando el archivo: {datos}")
+    try:
+        input = pd.read_csv(datos)
+        data = pipeline(input)
         modelo_cargado = load_model("./modelo_rn_best.h5", custom_objects={'pondered_accuracy_rn': pondered_accuracy_rn})
         # Evaluar el modelo cargado
-        predict = modelo_cargado.predict(paso11)
-        pd.DataFrame(predict, columns=['RainTomorrow']).to_csv('./files/output.csv', index = False)#Ruta dentro del contenedor
+        predict = modelo_cargado.predict(data)
+        umbral = 0.31 # umbral best_model optuna
+        # Crear DataFrame con predicciones
+        output_df = pd.DataFrame({
+            'RainTomorrow': (predict.flatten() > umbral).astype(int),  # Columna basada en el umbral
+            'Probability': np.round(predict.flatten(), 4)
+        })
+        output_df.to_csv('./files/output.csv', index=False)
 
     except ValueError:
         print('Archivo con formato incorrecto o no se encontró el archivo')
